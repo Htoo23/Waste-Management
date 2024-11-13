@@ -10,6 +10,8 @@ import {Web3Auth} from '@web3Auth/modal';
 import {CHAIN_NAMESPACES,IProvider,WEB3AUTH_NETWORK} from '@web3Auth/base';
 import { EthereumPrivateKeyProvider } from "@web3Auth/ethereum-provider";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { createUser, getUnreadNotifications, markNotificationAsRead, getUserByEmail, getUserBalance } from "@/utils/db/actions"
+
 
 const clientId=process.env.WEB3_AUTH_CLIENT_ID
 
@@ -76,4 +78,22 @@ export default function Header({onMenuClick,totalEarnings}:HeaderProps){
     
         init();
       }, []);
+
+      useEffect(()=>{
+        const fetchNotifications=async()=>{
+            if(userInfo && userInfo.email){
+                const user=await getUserByEmail(userInfo.email)
+                if(user){
+                    const unreadNotifications=await getUnreadNotifications (user.id)
+                    setNotificaiton(unreadNotifications)
+                }
+            }
+
+        }
+        fetchNotifications();
+
+        const  notificationInterval=setInterval(fetchNotifications,30000)
+        return ()=>clearInterval(notificationInterval)
+
+      },[userInfo])
 }
