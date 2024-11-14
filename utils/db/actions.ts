@@ -1,5 +1,6 @@
+import { DEFAULT_CIPHERS } from "tls";
 import { db } from "./dbConfig";
-import {Users} from "./schema";
+import {Notifications,Users,Transactions} from "./schema";
 import {eq,sql,and,desc} from 'drizzle-orm';
 
 export async function createUser(email:string,name:string){
@@ -35,6 +36,36 @@ export async function getUnreadNotifications(userId:number){
           ).execute();
     }catch(error){
         console.error('Error fetching unread notifications',error)
+        return null
+    }
+}
+
+export async function getUserBalance(userId:number):Promise<number>{
+
+    const transactions=await getRewardTransactions(userId) || [];
+
+    if(!transactions) return 0;
+
+    const balance=transactions.reduce((acc,transaction:any)=>{
+        return transaction.type.startsWith('earned')? acc +transaction.amount:acc-transactions
+    },0)
+
+    return Math.max(balance,0)
+
+}
+export async function getRewardTransactions(userId:number){
+    try{
+        const transactions=await db.select({
+            id:Transactions.id,
+            type:Transactions.type,
+            amount:Transactions.amount,
+            description:Transactions.description,
+            date:Transactions.date
+
+        }).from(Transactions).where(eq(Transactions.userId,userId)).orderBy(desc(Transactions.date)).limit(10).execute();
+
+    }catch(error){
+        console.error('Error fetching reward transactions',error)
         return null
     }
 }
