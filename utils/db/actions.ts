@@ -64,6 +64,13 @@ export async function getRewardTransactions(userId:number){
 
         }).from(Transactions).where(eq(Transactions.userId,userId)).orderBy(desc(Transactions.date)).limit(10).execute();
 
+        const formattedTransactions=transactions.map(t=>({
+            ...t,
+            date:t.date.toISOString().split('T')[0] //YYY-MM-DD
+
+        }))
+        return formattedTransactions
+
     }catch(error){
         console.error('Error fetching reward transactions',error)
         return null
